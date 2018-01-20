@@ -3,16 +3,27 @@
 #define LOW8  0x00
 #define HIGH8 0xFF
 #define FACTOR HIGH8
+#define RANGE 256
 
-LedStrip::LedStrip(uint8_t pin_r, uint8_t pin_g, uint8_t pin_b, uint8_t pin_w) : mMode(LED_NONE), mColor(0), mRGBOn(false), mWhiteOn(false), mBrightness(HIGH8), mWhiteBrightness(HIGH8) {
+LedStrip::LedStrip(uint8_t pin_r, uint8_t pin_g, uint8_t pin_b, uint8_t pin_w, CRGB const &correction) : 
+        mMode(LED_NONE), mColor(0), mRGBOn(false), mWhiteOn(false), 
+        mBrightness(HIGH8), mWhiteBrightness(HIGH8), mCorrection(correction) {
     mPins.r = pin_r;
     mPins.g = pin_g;
     mPins.b = pin_b;
     mPins.w = pin_w;
-    analogWrite(mPins.r, LOW8);
-    analogWrite(mPins.g, LOW8);
-    analogWrite(mPins.b, LOW8);
-    analogWrite(mPins.w, LOW8);
+}
+
+void LedStrip::init() {
+    
+    pinMode(mPins.r, OUTPUT);
+    pinMode(mPins.g, OUTPUT);
+    pinMode(mPins.b, OUTPUT);
+    pinMode(mPins.w, OUTPUT);
+    analogWriteRange(RANGE);
+
+    setLeds();
+    setWhite();
 }
 
 void LedStrip::rgbOn() {
@@ -40,18 +51,22 @@ void LedStrip::setColor(CHSV color) {
 void LedStrip::setMode(LED_MODE mode) {
     mMode = mode;
     mModeIndex = 0;
+    setLeds();
 }
 
 void LedStrip::setBrightness(uint8_t value) {
     mBrightness = value;
+    setLeds();
 }
 
 void LedStrip::addBrightness(uint8_t value) {
-    value = qadd8(mBrightness, value);
+    mBrightness = qadd8(mBrightness, value);
+    setLeds();
 }
 
 void LedStrip::subBrightness(uint8_t value) {
     mBrightness = qsub8(mBrightness, value);
+    setLeds();
 }
 
 void LedStrip::whiteOn() {
@@ -108,7 +123,7 @@ void LedStrip::process() {
                 hsv.sat = HIGH8;
                 hsv.val = HIGH8;
                 setColor(hsv);
-                next = now + 
+                next = now + 500;
             }
             break;
         case LED_FLASH:
@@ -131,15 +146,18 @@ void LedStrip::process() {
 }
 
 void LedStrip::setLeds() {
-    if (mRGBOn) {
-        uint8_t max = mColor.r;
-        if (mColor.g > max) max = mColor.g;
-        if (mColor.b > max) max = mColor.b;
-        uint16_t factor = ((uint16_t) (mBrightness) * FACTOR) / max;
+    uint8_t max = mColor.r;
+    if (mColor.g > max) max = mColor.g;
+    if (mColor.b > max) max = mColor.b;
+    
+    if (mRGBOn && (max > 0)) {
+        uint16_t factor = (((uint16_t) mBrightness) * FACTOR) / max;
+        Serial.printf("Color: %0.2x%0.2x%0.2x Factor: %d\n", mColor.r, mColor.g, mColor.b, factor);
         analogWrite(mPins.r, mColor.r * factor/FACTOR);
         analogWrite(mPins.g, mColor.g * factor/FACTOR);
         analogWrite(mPins.b, mColor.b * factor/FACTOR);
     } else {
+        Serial.printf("RGB-LEDs OFF\n");
         analogWrite(mPins.r, LOW8);
         analogWrite(mPins.g, LOW8);
         analogWrite(mPins.b, LOW8);
@@ -148,8 +166,17 @@ void LedStrip::setLeds() {
 
 void LedStrip::setWhite() {
     if (mWhiteOn) {
+        Serial.printf("White: Brightness: %d\n", mWhiteBrightness);
         analogWrite(mPins.w, mWhiteBrightness);
     } else {
+        Serial.printf("White: OFF\n");
         analogWrite(mPins.w, LOW8);
     }
+}
+
+
+void LedStrip::setCorrection() {
+    mCorrection.b = scale8(mColor.r, mCorrection.r);
+    mCorrection.g = scale8(mColor.g, mCorrection.g);
+    mCorrection.b = scale8(mColor.b, mCorrection.b);
 }

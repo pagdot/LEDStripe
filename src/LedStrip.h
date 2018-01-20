@@ -15,7 +15,8 @@ enum LED_MODE {
 
 class LedStrip {
     public:
-        LedStrip(uint8_t pin_r, uint8_t pin_g, uint8_t pin_b, uint8_t pin_w);
+        LedStrip(uint8_t pin_r, uint8_t pin_g, uint8_t pin_b, uint8_t pin_w, CRGB const &correction);
+        void init();
 
         void rgbOn();
         void rgbOff();
@@ -37,6 +38,7 @@ class LedStrip {
     private:
         void setLeds();
         void setWhite();
+        void setCorrection();
 
         bool mRGBOn;
         CRGB mColor;
@@ -45,7 +47,9 @@ class LedStrip {
         uint8_t mBrightness;
 
         bool mWhiteOn;
-        bool mWhiteBrightness;
+        uint8_t mWhiteBrightness;
+
+        CRGB mCorrection;
 
         struct {
             uint8_t r;
