@@ -39,20 +39,54 @@ void LedStrip::rgbOff() {
 }
 
 void LedStrip::setColor(CRGB color) {
-    mColor = color;
-    mMode = LED_NONE;
-    setLeds();
+    setColor(color, false);
 }
 
 void LedStrip::setColor(CHSV color) {
+    setColor(color, false);
+}
+
+void LedStrip::setColor(CRGB color, bool keep) {
+    if (!keep) mMode = LED_NONE;
+    mColor = color;
+    setLeds();
+}
+
+void LedStrip::setColor(CHSV color, bool keep) {
+    if (!keep) mMode = LED_NONE;
     hsv2rgb_rainbow(color, mColor);
-    mMode = LED_NONE;
     setLeds();
 }
 
 void LedStrip::setMode(LED_MODE mode) {
     mMode = mode;
     mModeIndex = 0;
+
+    switch(mode) {
+        
+    case LED_NONE:
+        break;
+    case LED_BREATH:
+        mStateDuration = 1;
+        break;
+    case LED_FADE:
+        mStateDuration = 200;
+        break;
+    case LED_JUMP:
+        mStateDuration = 60;
+        break;
+    case LED_FLASH:
+        mStateDuration = 50;
+        break;
+    case LED_JUMPBREATH:
+        mStateDuration = 1;
+        mSpecial.hue = 0;
+        mSpecial.s = HIGH8;
+        mSpecial.v = HIGH8;
+        break;
+    }
+    mNextState = millis();
+
     setLeds();
 }
 
@@ -97,25 +131,38 @@ void LedStrip::subWhite(uint8_t value) {
 }
 
 void LedStrip::process() {
-    static unsigned long next = 0;
     unsigned long now = millis();
     
-    if ((next < now) || (mMode == LED_NONE) || (!mRGBOn)) {
+    if ((mNextState > now) || (mMode == LED_NONE) || (!mRGBOn)) {
         return;
     } 
     
     switch (mMode) {
+        case LED_JUMPBREATH:
+            {
+                if (mModeIndex%HIGH8 == 0) {
+                    mSpecial.hue += 32;
+                    setColor(mSpecial, true);
+                }
+                uint8_t tmp = quadwave8(mModeIndex);
+                tmp = tmp == 0 ? 1 : tmp;
+                setBrightness(tmp);
+                break;
+            }
         case LED_BREATH:
-            setBrightness(quadwave8(mModeIndex));
-            break;
+            {
+                uint8_t tmp = quadwave8(mModeIndex);
+                tmp = tmp == 0 ? 1 : tmp;
+                setBrightness(tmp);
+                break;
+            }
         case LED_FADE:
             {
                 CHSV hsv;
                 hsv.hue = mModeIndex;
                 hsv.sat = HIGH8;
                 hsv.val = HIGH8;
-                setColor(hsv);
-                next = now + 500;
+                setColor(hsv, true);
             }
             break;
         case LED_JUMP:
@@ -124,8 +171,7 @@ void LedStrip::process() {
                 hsv.hue = mModeIndex;
                 hsv.sat = HIGH8;
                 hsv.val = HIGH8;
-                setColor(hsv);
-                next = now + 500;
+                setColor(hsv, true);
             }
             break;
         case LED_FLASH:
@@ -134,23 +180,24 @@ void LedStrip::process() {
                 hsv.hue = mModeIndex;
                 hsv.sat = HIGH8;
                 hsv.val = HIGH8;
-                setColor(hsv);
+                setColor(hsv, true);
             } else if ((mModeIndex+8)%16 == 0) {
                 CRGB rgb(0);
-                setColor(rgb);
+                setColor(rgb, true);
             }
-
             break;
         default:
             break;
     }
-    setLeds();
+    mNextState = now + mStateDuration;
+    mModeIndex++;
 }
 
 void LedStrip::setLeds() {
     uint8_t max = mColor.r;
     if (mColor.g > max) max = mColor.g;
     if (mColor.b > max) max = mColor.b;
+    if (mMode != LED_NONE) max = HIGH8;
     
     if (mRGBOn && (max > 0) && (mBrightness > 0)) {
         uint16_t factor = (((uint16_t) mBrightness) * FACTOR) / max;
@@ -176,11 +223,19 @@ void LedStrip::setWhite() {
     }
 }
 
-
 void LedStrip::setCorrection() {
     mCorrection.b = scale8(mColor.r, mCorrection.r);
     mCorrection.g = scale8(mColor.g, mCorrection.g);
     mCorrection.b = scale8(mColor.b, mCorrection.b);
+}
+
+void LedStrip::modeFaster(){
+    mStateDuration /= 2;
+    if (mStateDuration == 0) mStateDuration = 1;
+}
+
+void LedStrip::modeSlower(){
+    mStateDuration *= 2;
 }
 
 static inline uint8_t div8(uint16_t const base, uint8_t const div, bool zero) {

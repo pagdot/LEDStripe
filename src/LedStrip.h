@@ -10,7 +10,7 @@ enum LED_MODE {
     LED_FADE,
     LED_JUMP,
     LED_FLASH,
-    LED_AUTO
+    LED_JUMPBREATH
 };
 
 class LedStrip {
@@ -26,6 +26,8 @@ class LedStrip {
         void setBrightness(uint8_t value);
         void addBrightness(uint8_t value);
         void subBrightness(uint8_t value);
+        void modeFaster();
+        void modeSlower();
 
         void whiteOn();
         void whiteOff();
@@ -39,12 +41,17 @@ class LedStrip {
         void setLeds();
         void setWhite();
         void setCorrection();
+        void setColor(CRGB color, bool keep);
+        void setColor(CHSV color, bool keep);
 
         bool mRGBOn;
         CRGB mColor;
         LED_MODE mMode;
         uint16_t mModeIndex;
         uint8_t mBrightness;
+        unsigned long mNextState;
+        unsigned long mStateDuration;
+        CHSV mSpecial;
 
         bool mWhiteOn;
         uint8_t mWhiteBrightness;

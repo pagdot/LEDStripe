@@ -5,9 +5,6 @@
 
 #include <array>
 
-// An IR detector/demodulator is connected to GPIO pin 14(D5 on a NodeMCU
-// board).
-
 #define RANGE 256
 #define STEP 8
 
@@ -17,7 +14,7 @@
 #define PIN_G  D2
 #define PIN_B  D0
 
-const CRGB correction(0xffd0e0);
+const CRGB correction(0xFFB0D0);
 
 IR_Rec irRec(PIN_IR);
 LedStrip leds(PIN_R, PIN_G, PIN_B, PIN_W, correction);
@@ -28,6 +25,9 @@ void setup() {
 
     leds.init();
     Serial.write("RGBW init\n");    
+
+    pinMode(LED_BUILTIN, OUTPUT);
+    digitalWrite(LED_BUILTIN, LOW);
 }
 
 void loop() {
@@ -36,6 +36,7 @@ void loop() {
     static bool enable = false;
     static uint16_t dc = RANGE-1;
     if (irRec.receive(&cmd)) {
+        
         switch(cmd) {
             case RGB_ON:
                 Serial.println("RGB ON");
@@ -59,19 +60,19 @@ void loop() {
                 break;
             case RGB_R1:
                 Serial.println("RGB RED 1");
-                leds.setColor(CRGB::OrangeRed);
+                leds.setColor(0xFF1000);
                 break;
             case RGB_R2:
                 Serial.println("RGB RED 2");
-                leds.setColor(CRGB::Orange);
+                leds.setColor(0xFF3000);
                 break;
             case RGB_R3:
                 Serial.println("RGB RED 3");
-                leds.setColor(CRGB::LightSalmon);
+                leds.setColor(0xFF5000);
                 break;
             case RGB_R4:
                 Serial.println("RGB RED 4");
-                leds.setColor(CRGB::Yellow);
+                leds.setColor(0xFF7000);
                 break;
             case RGB_G:
                 Serial.println("RGB GREEN");
@@ -79,15 +80,15 @@ void loop() {
                 break;
             case RGB_G1:
                 Serial.println("RGB GREEN 1");
-                leds.setColor(CRGB::MediumSpringGreen);
+                leds.setColor(CRGB::Turquoise);
                 break;
             case RGB_G2:
                 Serial.println("RGB GREEN 2");
-                leds.setColor(CRGB::MediumTurquoise);
+                leds.setColor(CRGB::DarkTurquoise);
                 break;
             case RGB_G3:
                 Serial.println("RGB GREEN 3");
-                leds.setColor(CRGB::CornflowerBlue);
+                leds.setColor(CRGB::SeaGreen);
                 break;
             case RGB_G4:
                 Serial.println("RGB GREEN 4");
@@ -98,7 +99,7 @@ void loop() {
                 Serial.println("RGB BLUE");
                 break;
             case RGB_B1:
-                leds.setColor(CRGB::RoyalBlue);
+                leds.setColor(CRGB::SteelBlue);
                 Serial.println("RGB BLUE 1");
                 break;
             case RGB_B2:
@@ -106,11 +107,11 @@ void loop() {
                 Serial.println("RGB BLUE 2");
                 break;
             case RGB_B3:
-                leds.setColor(CRGB::Indigo);
+                leds.setColor(CRGB::Purple);
                 Serial.println("RGB BLUE 3");
                 break;
             case RGB_B4:
-                leds.setColor(CRGB::HotPink);
+                leds.setColor(CRGB::DeepPink);
                 Serial.println("RGB BLUE 4");
                 break;
             case RGB_W:
@@ -119,15 +120,15 @@ void loop() {
                 break;
             case RGB_W1:
                 Serial.println("RGB WHITE 1");
-                leds.setColor(CRGB::LightPink);
+                leds.setColor(CRGB::Fuchsia);
                 break;
             case RGB_W2:
                 Serial.println("RGB WHITE 2");
-                leds.setColor(CRGB::Orchid);
+                leds.setColor(CRGB::MediumVioletRed);
                 break;
             case RGB_W3:
                 Serial.println("RGB WHITE 3");
-                leds.setColor(CRGB::PaleTurquoise);
+                leds.setColor(CRGB::RoyalBlue);
                 break;
             case RGB_W4:
                 Serial.println("RGB WHITE 4");
@@ -165,8 +166,37 @@ void loop() {
                 Serial.println("White 100\%");
                 leds.setWhite(255);
                 break;
+            case JUMP3:
+                Serial.println("Mode Jump3");
+                leds.setMode(LED_JUMP);
+                break;
+            case FADE3:
+                Serial.println("Mode Fade3");
+                leds.setMode(LED_FADE);
+                break;
+            case FLASH:
+                Serial.println("Mode Flash");
+                leds.setMode(LED_FLASH);
+                break;
+            case FADE7:
+                Serial.println("Mode Breath");
+                leds.setMode(LED_BREATH);
+                break;
+            case AUTO:
+                Serial.println("Mode Jump-Breath");
+                leds.setMode(LED_JUMPBREATH);
+            case QUICK:
+                Serial.println("Faster");
+                leds.modeFaster();
+                break;
+            case SLOW:
+                Serial.println("Slower");
+                leds.modeSlower();
+                break;
             default:
-                Serial.println("Unknwon CMD");
+                if ((cmd & 0xff0000) == 0xff0000) {
+                    Serial.printf("Unknwon CMD %x\n", cmd);
+                }
                 break;
         }
     }
@@ -196,4 +226,6 @@ void loop() {
         }
         leds.setColor(rgb);
     }
+
+    leds.process();
 }
