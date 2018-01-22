@@ -5,6 +5,8 @@
 #define FACTOR HIGH8
 #define RANGE 256
 
+static inline uint8_t div8(uint16_t const base, uint8_t const div, bool const zero);
+
 LedStrip::LedStrip(uint8_t pin_r, uint8_t pin_g, uint8_t pin_b, uint8_t pin_w, CRGB const &correction) : 
         mMode(LED_NONE), mColor(0), mRGBOn(false), mWhiteOn(false), 
         mBrightness(HIGH8), mWhiteBrightness(HIGH8), mCorrection(correction) {
@@ -150,12 +152,12 @@ void LedStrip::setLeds() {
     if (mColor.g > max) max = mColor.g;
     if (mColor.b > max) max = mColor.b;
     
-    if (mRGBOn && (max > 0)) {
+    if (mRGBOn && (max > 0) && (mBrightness > 0)) {
         uint16_t factor = (((uint16_t) mBrightness) * FACTOR) / max;
         Serial.printf("Color: %0.2x%0.2x%0.2x Factor: %d\n", mColor.r, mColor.g, mColor.b, factor);
-        analogWrite(mPins.r, mColor.r * factor/FACTOR);
-        analogWrite(mPins.g, mColor.g * factor/FACTOR);
-        analogWrite(mPins.b, mColor.b * factor/FACTOR);
+        analogWrite(mPins.r, div8(mColor.r * factor, FACTOR, mColor.r == 0));
+        analogWrite(mPins.g, div8(mColor.g * factor, FACTOR, mColor.g == 0));
+        analogWrite(mPins.b, div8(mColor.b * factor, FACTOR, mColor.b == 0));
     } else {
         Serial.printf("RGB-LEDs OFF\n");
         analogWrite(mPins.r, LOW8);
@@ -179,4 +181,9 @@ void LedStrip::setCorrection() {
     mCorrection.b = scale8(mColor.r, mCorrection.r);
     mCorrection.g = scale8(mColor.g, mCorrection.g);
     mCorrection.b = scale8(mColor.b, mCorrection.b);
+}
+
+static inline uint8_t div8(uint16_t const base, uint8_t const div, bool zero) {
+    uint8_t tmp = base / div;
+    return zero || (tmp != 0) ? tmp : 1; 
 }
