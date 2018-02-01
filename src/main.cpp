@@ -5,9 +5,6 @@
 
 #include <array>
 
-#define RANGE 256
-#define STEP 8
-
 #define PIN_IR D5
 #define PIN_W  D6
 #define PIN_R  D1
@@ -19,6 +16,20 @@ const CRGB correction(0xFFB0D0);
 IR_Rec irRec(PIN_IR);
 LedStrip leds(PIN_R, PIN_G, PIN_B, PIN_W, correction);
 
+void test(int r, int g, int b) {
+    
+    analogWrite(PIN_R, r);
+    analogWrite(PIN_G, g);
+    analogWrite(PIN_B, b);
+    delay(1000);
+
+    analogWrite(PIN_R, 0);
+    analogWrite(PIN_G, 0);
+    analogWrite(PIN_B, 0);
+
+    delay(100);
+}
+
 void setup() {
     Serial.begin(9600);
     Serial.write("serial init\n");
@@ -28,13 +39,17 @@ void setup() {
 
     pinMode(LED_BUILTIN, OUTPUT);
     digitalWrite(LED_BUILTIN, LOW);
+
+    test(13994, 13900, 13900);
+    test(14076, 13994, 13900);
+    test(14076, 27988, 13900);
+    test(14076, 14100, 13900);
 }
 
 void loop() {
+    /*
     IR_CMD cmd;
 
-    static bool enable = false;
-    static uint16_t dc = RANGE-1;
     if (irRec.receive(&cmd)) {
         
         switch(cmd) {
@@ -200,32 +215,6 @@ void loop() {
                 break;
         }
     }
-
-    if (Serial.available()) {
-        char ch = Serial.read();
-        static CRGB rgb(0xffffff);
-        static auto col = &(rgb.r);
-        switch (ch) {
-            case '+':
-                (*col) = qadd8(*col, 8);
-                break;
-            case '-':
-                (*col) = qsub8(*col, 8);
-                break;
-            case 'r':
-                col = &(rgb.r);
-                break;
-            case 'g':
-                col = &(rgb.g);
-                break;
-            case 'b':
-                col = &(rgb.b);
-                break;
-            default:
-                break;
-        }
-        leds.setColor(rgb);
-    }
-
-    leds.process();
+    */
+    //leds.process();
 }
