@@ -16,20 +16,6 @@ const CRGB correction(0xFFB0D0);
 IR_Rec irRec(PIN_IR);
 LedStrip leds(PIN_R, PIN_G, PIN_B, PIN_W, correction);
 
-void test(int r, int g, int b) {
-    
-    analogWrite(PIN_R, r);
-    analogWrite(PIN_G, g);
-    analogWrite(PIN_B, b);
-    delay(1000);
-
-    analogWrite(PIN_R, 0);
-    analogWrite(PIN_G, 0);
-    analogWrite(PIN_B, 0);
-
-    delay(100);
-}
-
 void setup() {
     Serial.begin(9600);
     Serial.write("serial init\n");
@@ -39,15 +25,9 @@ void setup() {
 
     pinMode(LED_BUILTIN, OUTPUT);
     digitalWrite(LED_BUILTIN, LOW);
-
-    test(13994, 13900, 13900);
-    test(14076, 13994, 13900);
-    test(14076, 27988, 13900);
-    test(14076, 14100, 13900);
 }
 
 void loop() {
-    /*
     IR_CMD cmd;
 
     if (irRec.receive(&cmd)) {
@@ -215,6 +195,6 @@ void loop() {
                 break;
         }
     }
-    */
-    //leds.process();
+    
+    leds.process();
 }

@@ -1,11 +1,12 @@
 #include <LedStrip.h>
 
-#define HIGH8       0xFF
-#define HIGH16      0xFFFF
+#define HIGH8       0xFF    //255
+#define HIGH10      0x03FF  //1023
+#define HIGH16      0xFFFF  //65535
 #define FACTOR      HIGH8
-#define RANGE       HIGH16
+#define RANGE       HIGH10
 
-static inline uint16_t mulDiv(uint16_t const base, uint16_t const mul, uint16_t const div, bool zero = true);
+static inline uint16_t div8to10(uint16_t const base, uint16_t const div, bool zero = true);
 
 LedStrip::LedStrip(uint8_t pin_r, uint8_t pin_g, uint8_t pin_b, uint8_t pin_w, CRGB const &correction) : 
         mMode(LED_NONE), mColor(0), mRGBOn(false), mWhiteOn(false), 
@@ -208,9 +209,9 @@ void LedStrip::setLeds() {
     if (mRGBOn && (max > 0) && (mBrightness > 0)) {
         uint16_t factor = (((uint16_t) mBrightness) * FACTOR) / max;
         Serial.printf("Color: %0.2x%0.2x%0.2x Factor: %d\n", mColor.r, mColor.g, mColor.b, factor);
-        analogWrite(mPins.r, mulDiv(mColor.r, factor, FACTOR, mColor.r == 0));
-        analogWrite(mPins.g, mulDiv(mColor.g, factor, FACTOR, mColor.g == 0));
-        analogWrite(mPins.b, mulDiv(mColor.b, factor, FACTOR, mColor.b == 0));
+        analogWrite(mPins.r, div8to10(mColor.r * factor, FACTOR, mColor.r == 0));
+        analogWrite(mPins.g, div8to10(mColor.g * factor, FACTOR, mColor.g == 0));
+        analogWrite(mPins.b, div8to10(mColor.b * factor, FACTOR, mColor.b == 0));
         Serial.print("\n");
     } else {
         Serial.printf("RGB-LEDs OFF\n");
@@ -245,12 +246,9 @@ void LedStrip::modeSlower(){
     mStateDuration *= 2;
 }
 
-static inline uint16_t mulDiv(uint16_t const base, uint16_t const mul, uint16_t const div, bool zero) {
-    if ((base == 0) || (mul == 0))  return 0;
-    if (div  == 0)                  return HIGH16;
-    uint32_t result = base << 8;
-    result *= mul;
-    result /= div;
-    Serial.printf("%u-", (uint16_t)result);
+static inline uint16_t div8to10(uint16_t const base, uint16_t const div, bool zero) {
+    if (base == 0) return 0;
+    if (div  == 0) return HIGH16;
+    uint16_t result = (base << 2) / div;
     return  zero || (result != 0) ? result : 1; 
 }
