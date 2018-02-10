@@ -1,11 +1,5 @@
 #include <LedStrip.h>
 
-#define HIGH8       0xFF    //255
-#define HIGH10      0x03FF  //1023
-#define HIGH16      0xFFFF  //65535
-#define FACTOR      HIGH8
-#define RANGE       HIGH10
-
 static inline uint16_t div8to10(uint16_t const base, uint16_t const div, bool zero = true);
 
 LedStrip::LedStrip(uint8_t pin_r, uint8_t pin_g, uint8_t pin_b, uint8_t pin_w, CRGB const &correction) : 
@@ -224,7 +218,7 @@ void LedStrip::setLeds() {
 void LedStrip::setWhite() {
     if (mWhiteOn) {
         Serial.printf("White: Brightness: %d\n", mWhiteBrightness);
-        analogWrite(mPins.w, mWhiteBrightness << 8);
+        analogWrite(mPins.w, mWhiteBrightness << 2);
     } else {
         Serial.printf("White: OFF\n");
         analogWrite(mPins.w, LOW);
