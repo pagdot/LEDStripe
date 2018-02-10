@@ -5,9 +5,6 @@
 
 #include <array>
 
-#define RANGE 256
-#define STEP 8
-
 #define PIN_IR D5
 #define PIN_W  D6
 #define PIN_R  D1
@@ -33,8 +30,6 @@ void setup() {
 void loop() {
     IR_CMD cmd;
 
-    static bool enable = false;
-    static uint16_t dc = RANGE-1;
     if (irRec.receive(&cmd)) {
         
         switch(cmd) {
@@ -200,32 +195,6 @@ void loop() {
                 break;
         }
     }
-
-    if (Serial.available()) {
-        char ch = Serial.read();
-        static CRGB rgb(0xffffff);
-        static auto col = &(rgb.r);
-        switch (ch) {
-            case '+':
-                (*col) = qadd8(*col, 8);
-                break;
-            case '-':
-                (*col) = qsub8(*col, 8);
-                break;
-            case 'r':
-                col = &(rgb.r);
-                break;
-            case 'g':
-                col = &(rgb.g);
-                break;
-            case 'b':
-                col = &(rgb.b);
-                break;
-            default:
-                break;
-        }
-        leds.setColor(rgb);
-    }
-
+    
     leds.process();
 }

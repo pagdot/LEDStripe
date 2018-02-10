@@ -4,6 +4,13 @@
 #include <stdint.h>
 #include <FastLED.h>
 
+#define HIGH8       0xFF    //255
+#define HIGH10      0x03FF  //1023
+#define HIGH12      0x0FFF  //4095
+#define HIGH16      0xFFFF  //65535
+#define FACTOR      HIGH8
+#define RANGE       HIGH10
+
 enum LED_MODE {
     LED_NONE,
     LED_BREATH,
